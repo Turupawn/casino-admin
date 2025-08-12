@@ -1,3 +1,30 @@
+<h2>Latest 10 Games</h2>
+<% if @latest_games && @latest_games.any? %>
+  <% @latest_games.each_with_index do |game, index| %>
+    <div style="border: 1px solid #ccc; margin: 10px 0; padding: 10px;">
+      <h3>Game #<%= index + 1 %></h3>
+      <pre>
+        Game State: <%= game[0] %>
+        Player Address: <%= game[1] %>
+        Player Commit: <%= game[2] ? game[2].unpack1('H*').prepend('0x') : 'N/A' %>
+        Commit Timestamp: <%= game[3] ? Time.at(game[3]) : 'N/A' %>
+        House Hash: <%= game[4] ? game[4].unpack1('H*').prepend('0x') : 'N/A' %>
+        House Hash Timestamp: <%= game[5] ? Time.at(game[5]) : 'N/A' %>
+        Player Secret: <%= game[6] ? game[6].unpack1('H*').prepend('0x') : 'N/A' %>
+        Player Card: <%= game[7] %>
+        House Card: <%= game[8] %>
+        Winner Address: <%= game[9] %>
+        Reveal Timestamp: <%= game[10] ? Time.at(game[10]) : 'Not revealed yet' %>
+      </pre>
+    </div>
+  <% end %>
+<% else %>
+  <p>No games found.</p>
+<% end %>
+
+<hr>
+
+<h2>Single Game (ID: 1)</h2>
 <p>Game data:</p>
 <pre>
   Game State: <%= @game[0] %>

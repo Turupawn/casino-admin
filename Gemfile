@@ -63,4 +63,4 @@ group :test do
 end
 
 # My Gems
-gem "eth"
+gem "eth", github: "turupawn/eth.rb", branch: "tuple-fix"
