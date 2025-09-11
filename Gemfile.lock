@@ -1,10 +1,11 @@
 GIT
   remote: https://github.com/turupawn/eth.rb.git
-  revision: 4dbea983e2de15698d5ba100470f6540457424c5
+  revision: 1b90b57ed79900938ac9fccbae46606f21bea942
   branch: tuple-fix
   specs:
     eth (0.5.16)
       bigdecimal (~> 3.1)
+      bls12-381 (~> 0.3)
       forwardable (~> 1.3)
       keccak (~> 1.3)
       konstructor (~> 1.0)
@@ -92,8 +93,10 @@ GEM
     base64 (0.3.0)
     bcrypt_pbkdf (1.1.1)
     benchmark (0.4.1)
-    bigdecimal (3.2.2)
+    bigdecimal (3.2.3)
     bindex (0.8.1)
+    bls12-381 (0.3.0)
+      h2c (~> 0.2.0)
     bootsnap (1.18.6)
       msgpack (~> 1.2)
     brakeman (7.1.0)
@@ -117,6 +120,7 @@ GEM
       reline (>= 0.3.8)
     dotenv (3.1.8)
     drb (2.2.3)
+    ecdsa (1.2.0)
     ed25519 (1.4.0)
     erb (5.0.2)
     erubi (1.13.1)
@@ -137,6 +141,8 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    h2c (0.2.1)
+      ecdsa (~> 1.2.0)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.2.2)
@@ -227,7 +233,7 @@ GEM
     parser (3.3.9.0)
       ast (~> 2.4.1)
       racc
-    pkg-config (1.6.2)
+    pkg-config (1.6.4)
     pp (0.6.2)
       prettyprint
     prettyprint (0.2.0)
