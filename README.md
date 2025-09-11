@@ -1,24 +1,21 @@
-# README
+# Rake tasks
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+```bash
+# Manual execution
+rails games:fetch_new
 
-Things you may want to cover:
+# Check statistics
+rails games:stats
 
-* Ruby version
+# Start the job queue (for recurring jobs)
+rails solid_queue:start
+```
 
-* System dependencies
 
-* Configuration
+## Reset DB
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+```bash
+rails db:drop
+rails db:migrate
+rails games:fetch_new
+```

@@ -6,9 +6,27 @@
         "name": "_house",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "_gachaToken",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "HOUSE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -38,8 +56,14 @@
   },
   {
     "type": "function",
-    "name": "STAKE_AMOUNT",
-    "inputs": [],
+    "name": "betAmountsArray",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
       {
         "name": "",
@@ -59,7 +83,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "houseHash",
+        "name": "houseRandomness",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -100,6 +124,19 @@
   },
   {
     "type": "function",
+    "name": "gachaToken",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract GachaToken"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "games",
     "inputs": [
       {
@@ -130,12 +167,17 @@
         "internalType": "uint256"
       },
       {
-        "name": "houseHash",
+        "name": "betAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "houseRandomness",
         "type": "bytes32",
         "internalType": "bytes32"
       },
       {
-        "name": "houseHashTimestamp",
+        "name": "houseRandomnessTimestamp",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -153,11 +195,6 @@
         "name": "houseCard",
         "type": "uint256",
         "internalType": "uint256"
-      },
-      {
-        "name": "winner",
-        "type": "address",
-        "internalType": "address"
       },
       {
         "name": "revealTimestamp",
@@ -181,6 +218,24 @@
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getBetAmountsArray",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -206,7 +261,7 @@
   },
   {
     "type": "function",
-    "name": "getGameState",
+    "name": "getFrontendGameState",
     "inputs": [
       {
         "name": "player",
@@ -216,7 +271,12 @@
     ],
     "outputs": [
       {
-        "name": "player_balance",
+        "name": "playerEthBalance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "playerGachaTokenBalance",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -231,7 +291,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "houseHash",
+        "name": "houseRandomness",
         "type": "bytes32",
         "internalType": "bytes32"
       },
@@ -266,12 +326,17 @@
             "internalType": "uint256"
           },
           {
-            "name": "houseHash",
+            "name": "betAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "houseRandomness",
             "type": "bytes32",
             "internalType": "bytes32"
           },
           {
-            "name": "houseHashTimestamp",
+            "name": "houseRandomnessTimestamp",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -289,11 +354,6 @@
             "name": "houseCard",
             "type": "uint256",
             "internalType": "uint256"
-          },
-          {
-            "name": "winner",
-            "type": "address",
-            "internalType": "address"
           },
           {
             "name": "revealTimestamp",
@@ -352,12 +412,17 @@
             "internalType": "uint256"
           },
           {
-            "name": "houseHash",
+            "name": "betAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "houseRandomness",
             "type": "bytes32",
             "internalType": "bytes32"
           },
           {
-            "name": "houseHashTimestamp",
+            "name": "houseRandomnessTimestamp",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -377,29 +442,11 @@
             "internalType": "uint256"
           },
           {
-            "name": "winner",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
             "name": "revealTimestamp",
             "type": "uint256",
             "internalType": "uint256"
           }
         ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "house",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -445,6 +492,19 @@
   },
   {
     "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "pendingGameCount",
     "inputs": [],
     "outputs": [
@@ -455,6 +515,13 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -471,10 +538,107 @@
   },
   {
     "type": "function",
+    "name": "setBetAmounts",
+    "inputs": [
+      {
+        "name": "_betAmounts",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setGachaToken",
+    "inputs": [
+      {
+        "name": "_gachaToken",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setTieRewardAmount",
+    "inputs": [
+      {
+        "name": "_newAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "tieRewardAmount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "whitelistedBetAmounts",
+    "inputs": [
+      {
+        "name": "betAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "withdrawStuckFunds",
     "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "BetAmountsUpdated",
+    "inputs": [
+      {
+        "name": "newBetAmounts",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -494,6 +658,12 @@
       },
       {
         "name": "gameId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "betAmount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -519,5 +689,84 @@
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TieRewardAmountUpdated",
+    "inputs": [
+      {
+        "name": "newAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TieRewardMinted",
+    "inputs": [
+      {
+        "name": "player",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "gameId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   }
 ]

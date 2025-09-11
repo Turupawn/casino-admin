@@ -64,3 +64,4 @@ end
 
 # My Gems
 gem "eth", github: "turupawn/eth.rb", branch: "tuple-fix"
+gem "kaminari"

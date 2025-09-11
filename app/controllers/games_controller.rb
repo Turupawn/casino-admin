@@ -1,10 +1,15 @@
 class GamesController < ApplicationController
+  def index
+    @games = Game.recent.page(params[:page]).per(20)
+    @total_games = Game.count
+  end
+
   def home
     client = Eth::Client.create("https://carrot.megaeth.com/rpc")
 
     abi = ContractAbiService.load_abi("two_party_war_game")
 
-    contract_address = "0xcE4cE6DB4F8E1CF2394332cB29c2DaB822d4235A"
+    contract_address = "0x94c5F28b47145B1b38B200fEa1832248ad7dE825"
     @contract = Eth::Contract.from_abi(
       name: "TwoPartyWarGame",
       address: contract_address,
@@ -36,8 +41,8 @@ class GamesController < ApplicationController
             game_hash["playerAddress"],
             game_hash["playerCommit"],
             game_hash["commitTimestamp"],
-            game_hash["houseHash"],
-            game_hash["houseHashTimestamp"],
+            game_hash["houseRandomness"],
+            game_hash["houseRandomnessTimestamp"],
             game_hash["playerSecret"],
             game_hash["playerCard"],
             game_hash["houseCard"],
@@ -52,8 +57,8 @@ class GamesController < ApplicationController
           result2["playerAddress"],
           result2["playerCommit"],
           result2["commitTimestamp"],
-          result2["houseHash"],
-          result2["houseHashTimestamp"],
+          result2["houseRandomness"],
+          result2["houseRandomnessTimestamp"],
           result2["playerSecret"],
           result2["playerCard"],
           result2["houseCard"],
