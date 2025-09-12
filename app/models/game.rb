@@ -6,6 +6,9 @@ class Game < ApplicationRecord
 
   attribute :result, :integer
   enum :result, { error: 0, player_won: 1, house_won: 2, tie: 3 }
+  
+  attribute :game_state, :integer
+  enum :game_state, { not_started: 0, player_committed: 1, hash_posted: 2, revealed: 3, forfeited: 4 }
 
   scope :recent, -> { order(commit_timestamp: :desc) }
 

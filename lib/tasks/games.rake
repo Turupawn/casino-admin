@@ -15,8 +15,8 @@ namespace :games do
         abi: abi
       )
       
-      # Get the latest games with their IDs (default to 50 games)
-      latest_games_with_ids = fetch_latest_games_with_ids(client, contract, 50)
+      # Get all games with their IDs (no limit)
+      latest_games_with_ids = fetch_latest_games_with_ids(client, contract)
       
       if latest_games_with_ids.empty?
         puts "No games found from blockchain"
@@ -149,7 +149,7 @@ namespace :games do
     sanitized
   end
   
-  def fetch_latest_games_with_ids(client, contract, count = 50)
+  def fetch_latest_games_with_ids(client, contract)
     begin
       # First, get the next game ID to know the range
       next_game_id = client.call(contract, "nextGameId")
@@ -163,13 +163,11 @@ namespace :games do
         return []
       end
       
-      # Don't try to fetch more games than actually exist
-      games_to_fetch = [count, total_available_games].min
-      puts "Total available games: #{total_available_games}, fetching: #{games_to_fetch}"
+      puts "Total available games: #{total_available_games}, fetching all games"
       
       # Calculate how many batches we need using configured batch size
       batch_size = BlockchainConfig.game_fetch_batch_size
-      total_batches = (games_to_fetch.to_f / batch_size).ceil
+      total_batches = (total_available_games.to_f / batch_size).ceil
       
       games_with_ids = []
       
@@ -184,7 +182,7 @@ namespace :games do
         end
         
         # Calculate how many games to fetch in this batch
-        remaining_games = games_to_fetch - games_with_ids.length
+        remaining_games = total_available_games - games_with_ids.length
         amount = [batch_size, remaining_games, total_available_games - offset].min
         
         puts "Fetching batch #{batch_index + 1}/#{total_batches}: offset=#{offset}, amount=#{amount}"

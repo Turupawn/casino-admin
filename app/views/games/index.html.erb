@@ -53,17 +53,19 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                     <%= case game.game_state
-                        when 0 then 'bg-gray-100 text-gray-800'
-                        when 1 then 'bg-yellow-100 text-yellow-800'
-                        when 2 then 'bg-blue-100 text-blue-800'
-                        when 3 then 'bg-green-100 text-green-800'
+                        when 'not_started' then 'bg-gray-100 text-gray-800'
+                        when 'player_committed' then 'bg-yellow-100 text-yellow-800'
+                        when 'hash_posted' then 'bg-blue-100 text-blue-800'
+                        when 'revealed' then 'bg-green-100 text-green-800'
+                        when 'forfeited' then 'bg-red-100 text-red-800'
                         else 'bg-gray-100 text-gray-800'
                         end %>">
                     <%= case game.game_state
-                        when 0 then 'Pending'
-                        when 1 then 'Committed'
-                        when 2 then 'Revealed'
-                        when 3 then 'Completed'
+                        when 'not_started' then 'Not Started'
+                        when 'player_committed' then 'Committed'
+                        when 'hash_posted' then 'Hash Posted'
+                        when 'revealed' then 'Revealed'
+                        when 'forfeited' then 'Forfeited'
                         else 'Unknown'
                         end %>
                   </span>
