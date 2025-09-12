@@ -9,9 +9,9 @@ default: &default
   contract_address: "0x2Bd3e4Afc924919BC0fE5e1b448160B2bF2d91b7"
   contract_abi_name: "two_party_war_game"
   
-  # Fetch configuration
-  game_fetch_batch_size: 20
-  rpc_call_delay_ms: 150
+  # Smart sync configuration
+  sync_schedule_ms: 10000
+  max_games_to_process: 20
 
 development:
   <<: *default

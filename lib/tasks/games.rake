@@ -1,7 +1,7 @@
 namespace :games do
-  desc "Fetch new games from blockchain and store them in database"
-  task fetch_new: :environment do
-    puts "Starting to fetch new games from blockchain..."
+  desc "Smart sync games from blockchain with state-based optimization"
+  task sync: :environment do
+    puts "Starting smart games sync at #{Time.current}"
     
     begin
       # Initialize blockchain client and contract using configuration
@@ -15,103 +15,48 @@ namespace :games do
         abi: abi
       )
       
-      # Get all games with their IDs (no limit)
-      latest_games_with_ids = fetch_latest_games_with_ids(client, contract)
+      # Get the next game ID to know the range
+      next_game_id = client.call(contract, "nextGameId")
+      puts "Next game ID: #{next_game_id}"
+
+      # Calculate how many games actually exist (game IDs start from 1)
+      total_available_games = next_game_id - 1
       
-      if latest_games_with_ids.empty?
-        puts "No games found from blockchain"
+      if total_available_games <= 0
+        puts "No games available on blockchain"
         return
       end
       
-      puts "Found #{latest_games_with_ids.length} games from blockchain"
-      puts "First game data: #{latest_games_with_ids.first.inspect}" if latest_games_with_ids.any?
+      # Smart sync strategy based on current state distribution
+      sync_strategy = determine_sync_strategy(total_available_games)
+      puts "Sync strategy: #{sync_strategy[:type]} - #{sync_strategy[:description]}"
       
-      new_games_count = 0
-      updated_games_count = 0
-      
-      latest_games_with_ids.each_with_index do |game_data, index|
-        begin
-          game_id = game_data[:game_id]
-          game_hash = game_data[:game_data]
-          
-          # Sanitize the data to handle encoding issues
-          sanitized_hash = sanitize_game_hash(game_hash)
-          
-          # Check if game already exists by game_id (more reliable than player_commit)
-          existing_game = Game.find_by(game_id: game_id)
-          
-          if existing_game
-            # Update existing game with latest data
-            existing_game.update!(
-              game_state: sanitized_hash["gameState"],
-              player_address: sanitized_hash["playerAddress"],
-              player_commit: sanitized_hash["playerCommit"],
-              commit_timestamp: Time.at(sanitized_hash["commitTimestamp"].to_i),
-              bet_amount: sanitized_hash["betAmount"].to_s,
-              house_randomness: sanitized_hash["houseRandomness"],
-              house_randomness_timestamp: sanitized_hash["houseRandomnessTimestamp"] ? Time.at(sanitized_hash["houseRandomnessTimestamp"].to_i) : nil,
-              player_secret: sanitized_hash["playerSecret"],
-              player_card: sanitized_hash["playerCard"].to_s,
-              house_card: sanitized_hash["houseCard"].to_s,
-              reveal_timestamp: sanitized_hash["revealTimestamp"] ? Time.at(sanitized_hash["revealTimestamp"].to_i) : nil
-            )
-            
-            # Recalculate winner logic and total time for updated game
-            existing_game.calculate_winner
-            existing_game.calculate_total_time
-            existing_game.save!
-            updated_games_count += 1
-            puts "Updated game ID #{game_id} with commit: #{sanitized_hash["playerCommit"]}"
-          else
-            # Create new game
-            game = Game.from_contract_hash_with_id(sanitized_hash, game_id)
-            if game.save
-              new_games_count += 1
-              puts "Created new game ID #{game_id} with commit: #{sanitized_hash["playerCommit"]}"
-            else
-              puts "Failed to save game #{index + 1}: #{game.errors.full_messages.join(', ')}"
-            end
-          end
-        rescue => e
-          puts "Error processing game #{index + 1}: #{e.message}"
-          Rails.logger.error "Error processing game #{index + 1}: #{e.message}"
-        end
+      # Execute the determined sync strategy
+      case sync_strategy[:type]
+      when :new_games
+        sync_new_games(client, contract, sync_strategy[:starting_offset], total_available_games)
+      when :pending_house_response
+        sync_pending_house_games(client, contract, sync_strategy[:game_ids])
+      when :pending_player_reveal
+        sync_pending_player_games(client, contract, sync_strategy[:game_ids])
+      when :full_sync
+        sync_new_games(client, contract, 0, total_available_games)
       end
       
-      puts "Fetch completed successfully!"
-      puts "New games created: #{new_games_count}"
-      puts "Existing games updated: #{updated_games_count}"
-      puts "Total games in database: #{Game.count}"
-      
     rescue => e
-      puts "Error fetching games: #{e.message}"
+      puts "Error in smart games sync: #{e.message}"
       puts e.backtrace.first(5).join("\n")
-      Rails.logger.error "Games fetch task failed: #{e.message}"
+      Rails.logger.error "Smart games sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
     end
   end
 
-  desc "Show statistics about games in database"
-  task stats: :environment do
-    total_games = Game.count
-    
-    puts "=== Games Database Statistics ==="
-    puts "Total games: #{total_games}"
-    
-    if total_games > 0
-      latest_game = Game.recent.first
-      oldest_game = Game.order(:commit_timestamp).first
-      
-      puts "\nLatest game:"
-      puts "  Game ID: #{latest_game.game_id}"
-      puts "  Commit: #{latest_game.player_commit}"
-      puts "  Timestamp: #{latest_game.commit_timestamp}"
-      
-      puts "\nOldest game:"
-      puts "  Game ID: #{oldest_game.game_id}"
-      puts "  Commit: #{oldest_game.player_commit}"
-      puts "  Timestamp: #{oldest_game.commit_timestamp}"
-    end
+
+  desc "Run a single sync manually"
+  task manual_sync: :environment do
+    puts "Running manual sync..."
+    Rake::Task['games:sync'].invoke
+    puts "Manual sync completed!"
   end
   
   private
@@ -149,100 +94,246 @@ namespace :games do
     sanitized
   end
   
-  def fetch_latest_games_with_ids(client, contract)
-    begin
-      # First, get the next game ID to know the range
-      next_game_id = client.call(contract, "nextGameId")
-      puts "Next game ID: #{next_game_id}"
-      
-      # Calculate how many games actually exist (game IDs start from 1)
-      total_available_games = next_game_id - 1
-      
-      if total_available_games <= 0
-        puts "No games available on blockchain"
-        return []
-      end
-      
-      puts "Total available games: #{total_available_games}, fetching all games"
-      
-      # Calculate how many batches we need using configured batch size
-      batch_size = BlockchainConfig.game_fetch_batch_size
-      total_batches = (total_available_games.to_f / batch_size).ceil
-      
-      games_with_ids = []
-      
-      # Fetch games in batches using getGames function
-      total_batches.times do |batch_index|
-        offset = batch_index * batch_size
-        
-        # Skip this batch if offset is beyond available games
-        if offset >= total_available_games
-          puts "Skipping batch #{batch_index + 1}: offset #{offset} >= available games #{total_available_games}"
-          break
-        end
-        
-        # Calculate how many games to fetch in this batch
-        remaining_games = total_available_games - games_with_ids.length
-        amount = [batch_size, remaining_games, total_available_games - offset].min
-        
-        puts "Fetching batch #{batch_index + 1}/#{total_batches}: offset=#{offset}, amount=#{amount}"
-        
-        begin
-          # Call getGames with ascending order (ascendant=true)
-          games_batch = client.call(contract, "getGames", offset, amount, true)
-          
-          if games_batch && games_batch.is_a?(Array)
-            games_batch.each_with_index do |game_data, index|
-              if game_data && game_data.is_a?(Hash)
-                # Calculate the actual game ID (offset + index + 1, since game IDs start from 1)
-                game_id = offset + index + 1
-                
-                # The data is already in hash format from getGames function
-                game_hash = game_data
-                games_with_ids << { game_id: game_id, game_data: game_hash }
-              elsif game_data && game_data.is_a?(Array) && game_data.length >= 11
-                # Calculate the actual game ID (offset + index + 1, since game IDs start from 1)
-                game_id = offset + index + 1
-                
-                # Convert array to hash format (fallback for array format)
-                game_hash = {
-                  "gameState" => game_data[0],
-                  "playerAddress" => game_data[1],
-                  "playerCommit" => game_data[2],
-                  "commitTimestamp" => game_data[3],
-                  "betAmount" => game_data[4],
-                  "houseRandomness" => game_data[5],
-                  "houseRandomnessTimestamp" => game_data[6],
-                  "playerSecret" => game_data[7],
-                  "playerCard" => game_data[8],
-                  "houseCard" => game_data[9],
-                  "revealTimestamp" => game_data[10]
-                }
-                games_with_ids << { game_id: game_id, game_data: game_hash }
-              end
-            end
-            puts "  Fetched #{games_batch.length} games from batch"
-          else
-            puts "  No games returned from batch"
+  def determine_sync_strategy(total_available_games)
+    # Get current state distribution
+    state_counts = Game.group(:game_state).count
+    latest_game_id = Game.maximum(:game_id) || 0
+
+    puts "Current state distribution: #{state_counts}"
+    puts "Latest game ID in DB: #{latest_game_id}, Total available: #{total_available_games}"
+
+    # Strategy 1: Check for new games first (most common case)
+    if latest_game_id < total_available_games
+      new_games_count = total_available_games - latest_game_id
+      return {
+        type: :new_games,
+        description: "Found #{new_games_count} new games to sync",
+        starting_offset: latest_game_id
+      }
+    end
+
+    # Strategy 2: Check for games waiting for house response (player_committed)
+    pending_house_games = Game.where(game_state: :player_committed)
+                              .order(:commit_timestamp)
+                              .limit(BlockchainConfig.max_games_to_process)
+
+    if pending_house_games.any?
+      return {
+        type: :pending_house_response,
+        description: "Found #{pending_house_games.count} games waiting for house response",
+        game_ids: pending_house_games.pluck(:game_id)
+      }
+    end
+
+    # Strategy 3: Check for games waiting for player reveal (hash_posted)
+    pending_player_games = Game.where(game_state: :hash_posted)
+                               .order(:house_randomness_timestamp)
+                               .limit(BlockchainConfig.max_games_to_process)
+
+    if pending_player_games.any?
+      return {
+        type: :pending_player_reveal,
+        description: "Found #{pending_player_games.count} games waiting for player reveal",
+        game_ids: pending_player_games.pluck(:game_id)
+      }
+    end
+
+    # Strategy 4: Full sync if no specific priorities (rare case)
+    {
+      type: :full_sync,
+      description: "No specific priorities, doing full sync",
+      starting_offset: 0
+    }
+  end
+
+  def sync_new_games(client, contract, starting_offset, total_available_games)
+    puts "Syncing new games from offset #{starting_offset}"
+
+    batch_size = BlockchainConfig.max_games_to_process
+    remaining_games = total_available_games - starting_offset
+    amount = [batch_size, remaining_games].min
+
+    puts "Fetching batch: offset=#{starting_offset}, amount=#{amount}"
+
+    # Call getGames with ascending order (ascendant=true)
+    games_batch = client.call(contract, "getGames", starting_offset, amount, true)
+
+    if games_batch.nil? || !games_batch.is_a?(Array) || games_batch.empty?
+      puts "No games returned from batch"
+      return
+    end
+
+    process_games_batch(games_batch, starting_offset)
+  end
+
+  def sync_pending_house_games(client, contract, game_ids)
+    puts "Syncing #{game_ids.length} games waiting for house response"
+
+    # Fetch specific games by ID (more efficient than range)
+    game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
+      begin
+        # Get individual games by ID
+        batch_ids.each do |game_id|
+          game_data = client.call(contract, "getGame", game_id - 1) # Convert to 0-based index
+          if game_data && game_data.is_a?(Array) && game_data.length >= 11
+            game_hash = {
+              "gameState" => game_data[0],
+              "playerAddress" => game_data[1],
+              "playerCommit" => game_data[2],
+              "commitTimestamp" => game_data[3],
+              "betAmount" => game_data[4],
+              "houseRandomness" => game_data[5],
+              "houseRandomnessTimestamp" => game_data[6],
+              "playerSecret" => game_data[7],
+              "playerCard" => game_data[8],
+              "houseCard" => game_data[9],
+              "revealTimestamp" => game_data[10]
+            }
+
+            update_existing_game(game_id, game_hash)
           end
-        rescue => e
-          puts "  Error fetching batch #{batch_index + 1}: #{e.message}"
-          Rails.logger.error "Error fetching batch #{batch_index + 1}: #{e.message}"
         end
-        
-        # Add delay between batches to respect RPC rate limits (except for the last batch)
-        if batch_index < total_batches - 1
-          delay_seconds = BlockchainConfig.rpc_call_delay_ms / 1000.0
-          puts "  Waiting #{BlockchainConfig.rpc_call_delay_ms}ms before next batch..."
-          sleep(delay_seconds)
-        end
+
+        # Small delay between batches to respect RPC limits
+        sleep(0.1) if batch_ids.length > 1
+      rescue => e
+        puts "Error syncing house games batch: #{e.message}"
       end
-      
-      puts "Total games fetched: #{games_with_ids.length}"
-      games_with_ids
-    rescue => e
-      Rails.logger.error "Failed to fetch latest games with IDs: #{e.message}"
-      []
+    end
+  end
+
+  def sync_pending_player_games(client, contract, game_ids)
+    puts "Syncing #{game_ids.length} games waiting for player reveal"
+
+    # Similar to house games but with different batching strategy
+    game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
+      begin
+        batch_ids.each do |game_id|
+          game_data = client.call(contract, "getGame", game_id - 1)
+          if game_data && game_data.is_a?(Array) && game_data.length >= 11
+            game_hash = {
+              "gameState" => game_data[0],
+              "playerAddress" => game_data[1],
+              "playerCommit" => game_data[2],
+              "commitTimestamp" => game_data[3],
+              "betAmount" => game_data[4],
+              "houseRandomness" => game_data[5],
+              "houseRandomnessTimestamp" => game_data[6],
+              "playerSecret" => game_data[7],
+              "playerCard" => game_data[8],
+              "houseCard" => game_data[9],
+              "revealTimestamp" => game_data[10]
+            }
+
+            update_existing_game(game_id, game_hash)
+          end
+        end
+
+        # Small delay between batches
+        sleep(0.1) if batch_ids.length > 1
+      rescue => e
+        puts "Error syncing player games batch: #{e.message}"
+      end
+    end
+  end
+
+  def process_games_batch(games_batch, starting_offset)
+    puts "Processing batch of #{games_batch.length} games"
+
+    new_games_count = 0
+    updated_games_count = 0
+
+    games_batch.each_with_index do |game_data, index|
+      begin
+        # Calculate the actual game ID (offset + index + 1, since game IDs start from 1)
+        game_id = starting_offset + index + 1
+
+        # Convert array to hash format if needed
+        game_hash = if game_data.is_a?(Hash)
+          game_data
+        elsif game_data.is_a?(Array) && game_data.length >= 11
+          {
+            "gameState" => game_data[0],
+            "playerAddress" => game_data[1],
+            "playerCommit" => game_data[2],
+            "commitTimestamp" => game_data[3],
+            "betAmount" => game_data[4],
+            "houseRandomness" => game_data[5],
+            "houseRandomnessTimestamp" => game_data[6],
+            "playerSecret" => game_data[7],
+            "playerCard" => game_data[8],
+            "houseCard" => game_data[9],
+            "revealTimestamp" => game_data[10]
+          }
+        else
+          puts "Skipping invalid game data at index #{index}"
+          next
+        end
+
+        # Check if game already exists by game_id
+        existing_game = Game.find_by(game_id: game_id)
+
+        if existing_game
+          update_existing_game(game_id, game_hash)
+          updated_games_count += 1
+        else
+          # Create new game
+          game = create_new_game(game_hash, game_id)
+          if game&.persisted?
+            new_games_count += 1
+          end
+        end
+      rescue => e
+        puts "Error processing game #{index + 1}: #{e.message}"
+        Rails.logger.error "Error processing game #{index + 1}: #{e.message}"
+      end
+    end
+
+    puts "Batch processing completed: #{new_games_count} new, #{updated_games_count} updated"
+  end
+
+  def update_existing_game(game_id, game_hash)
+    existing_game = Game.find_by(game_id: game_id)
+    return unless existing_game
+
+    # Sanitize the data to handle encoding issues
+    sanitized_hash = sanitize_game_hash(game_hash)
+
+    # Update existing game with latest data
+    existing_game.update!(
+      game_state: sanitized_hash["gameState"],
+      player_address: sanitized_hash["playerAddress"],
+      player_commit: sanitized_hash["playerCommit"],
+      commit_timestamp: Time.at(sanitized_hash["commitTimestamp"].to_i),
+      bet_amount: sanitized_hash["betAmount"].to_s,
+      house_randomness: sanitized_hash["houseRandomness"],
+      house_randomness_timestamp: sanitized_hash["houseRandomnessTimestamp"] ? Time.at(sanitized_hash["houseRandomnessTimestamp"].to_i) : nil,
+      player_secret: sanitized_hash["playerSecret"],
+      player_card: sanitized_hash["playerCard"].to_s,
+      house_card: sanitized_hash["houseCard"].to_s,
+      reveal_timestamp: sanitized_hash["revealTimestamp"] ? Time.at(sanitized_hash["revealTimestamp"].to_i) : nil
+    )
+
+    # Recalculate winner logic and total time for updated game
+    existing_game.calculate_winner
+    existing_game.calculate_total_time
+    existing_game.save!
+
+    puts "Updated game ID #{game_id} (state: #{existing_game.game_state})"
+  end
+
+  def create_new_game(game_hash, game_id)
+    # Sanitize the data to handle encoding issues
+    sanitized_hash = sanitize_game_hash(game_hash)
+
+    # Create new game
+    game = Game.from_contract_hash_with_id(sanitized_hash, game_id)
+    if game.save
+      puts "Created new game ID #{game_id} (state: #{game.game_state})"
+      game
+    else
+      puts "Failed to save game ID #{game_id}: #{game.errors.full_messages.join(', ')}"
+      nil
     end
   end
 end
