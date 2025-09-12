@@ -4,10 +4,10 @@ namespace :games do
     puts "Starting to fetch new games from blockchain..."
     
     begin
-      # Initialize blockchain client and contract
-      client = Eth::Client.create("https://carrot.megaeth.com/rpc")
-      abi = ContractAbiService.load_abi("two_party_war_game")
-      contract_address = "0x2Bd3e4Afc924919BC0fE5e1b448160B2bF2d91b7"
+      # Initialize blockchain client and contract using configuration
+      client = Eth::Client.create(BlockchainConfig.rpc_url)
+      abi = ContractAbiService.load_abi(BlockchainConfig.contract_abi_name)
+      contract_address = BlockchainConfig.contract_address
       
       contract = Eth::Contract.from_abi(
         name: "TwoPartyWarGame",
@@ -15,7 +15,7 @@ namespace :games do
         abi: abi
       )
       
-      # Get the latest 50 games with their IDs
+      # Get the latest games with their IDs (default to 50 games)
       latest_games_with_ids = fetch_latest_games_with_ids(client, contract, 50)
       
       if latest_games_with_ids.empty?
@@ -90,67 +90,6 @@ namespace :games do
       Rails.logger.error e.backtrace.join("\n")
     end
   end
-  
-  
-  desc "Update existing games with their game IDs from blockchain"
-  task update_game_ids: :environment do
-    puts "Updating existing games with game IDs from blockchain..."
-    
-    begin
-      # Initialize blockchain client and contract
-      client = Eth::Client.create("https://carrot.megaeth.com/rpc")
-      abi = ContractAbiService.load_abi("two_party_war_game")
-      contract_address = "0x94c5F28b47145B1b38B200fEa1832248ad7dE825"
-      
-      contract = Eth::Contract.from_abi(
-        name: "TwoPartyWarGame",
-        address: contract_address,
-        abi: abi
-      )
-      
-      # Get games without game_id
-      games_without_id = Game.where(game_id: nil)
-      puts "Found #{games_without_id.count} games without game IDs"
-      
-      updated_count = 0
-      
-      games_without_id.each do |game|
-        # Try to find the game ID by checking recent games
-        next_game_id = client.call(contract, "nextGameId")
-        found = false
-        
-        # Check the last 50 games to find a match
-        (1..[next_game_id - 1, 50].min).reverse_each do |game_id|
-          begin
-            game_data = client.call(contract, "games", game_id)
-            if game_data && game_data.is_a?(Array) && game_data.length >= 11
-              # Check if this matches our game by player_commit
-              if game_data[2] && game.player_commit && 
-                 game_data[2].unpack('H*').first == game.player_commit.gsub('0x', '')
-                game.update!(game_id: game_id)
-                puts "Updated game with commit #{game.player_commit} to game ID #{game_id}"
-                updated_count += 1
-                found = true
-                break
-              end
-            end
-          rescue => e
-            # Skip games that don't exist
-          end
-        end
-        
-        unless found
-          puts "Could not find game ID for game with commit: #{game.player_commit}"
-        end
-      end
-      
-      puts "Updated #{updated_count} games with game IDs"
-      
-    rescue => e
-      puts "Error updating game IDs: #{e.message}"
-      Rails.logger.error "Game ID update task failed: #{e.message}"
-    end
-  end
 
   desc "Show statistics about games in database"
   task stats: :environment do
@@ -216,61 +155,95 @@ namespace :games do
       next_game_id = client.call(contract, "nextGameId")
       puts "Next game ID: #{next_game_id}"
       
-      # Calculate the range of game IDs to fetch
-      start_id = [next_game_id - count, 1].max
-      end_id = next_game_id - 1
+      # Calculate how many games actually exist (game IDs start from 1)
+      total_available_games = next_game_id - 1
+      
+      if total_available_games <= 0
+        puts "No games available on blockchain"
+        return []
+      end
+      
+      # Don't try to fetch more games than actually exist
+      games_to_fetch = [count, total_available_games].min
+      puts "Total available games: #{total_available_games}, fetching: #{games_to_fetch}"
+      
+      # Calculate how many batches we need using configured batch size
+      batch_size = BlockchainConfig.game_fetch_batch_size
+      total_batches = (games_to_fetch.to_f / batch_size).ceil
       
       games_with_ids = []
       
-      # Fetch games by ID (in reverse order to get latest first)
-      (start_id..end_id).reverse_each do |game_id|
+      # Fetch games in batches using getGames function
+      total_batches.times do |batch_index|
+        offset = batch_index * batch_size
+        
+        # Skip this batch if offset is beyond available games
+        if offset >= total_available_games
+          puts "Skipping batch #{batch_index + 1}: offset #{offset} >= available games #{total_available_games}"
+          break
+        end
+        
+        # Calculate how many games to fetch in this batch
+        remaining_games = games_to_fetch - games_with_ids.length
+        amount = [batch_size, remaining_games, total_available_games - offset].min
+        
+        puts "Fetching batch #{batch_index + 1}/#{total_batches}: offset=#{offset}, amount=#{amount}"
+        
         begin
-          game_data = client.call(contract, "games", game_id)
-          if game_data && game_data.is_a?(Array) && game_data.length >= 11
-            # Convert array to hash format (new ABI structure)
-            game_hash = {
-              "gameState" => game_data[0],
-              "playerAddress" => game_data[1],
-              "playerCommit" => game_data[2],
-              "commitTimestamp" => game_data[3],
-              "betAmount" => game_data[4],
-              "houseRandomness" => game_data[5],
-              "houseRandomnessTimestamp" => game_data[6],
-              "playerSecret" => game_data[7],
-              "playerCard" => game_data[8],
-              "houseCard" => game_data[9],
-              "revealTimestamp" => game_data[10]
-            }
-            games_with_ids << { game_id: game_id, game_data: game_hash }
+          # Call getGames with ascending order (ascendant=true)
+          games_batch = client.call(contract, "getGames", offset, amount, true)
+          
+          if games_batch && games_batch.is_a?(Array)
+            games_batch.each_with_index do |game_data, index|
+              if game_data && game_data.is_a?(Hash)
+                # Calculate the actual game ID (offset + index + 1, since game IDs start from 1)
+                game_id = offset + index + 1
+                
+                # The data is already in hash format from getGames function
+                game_hash = game_data
+                games_with_ids << { game_id: game_id, game_data: game_hash }
+              elsif game_data && game_data.is_a?(Array) && game_data.length >= 11
+                # Calculate the actual game ID (offset + index + 1, since game IDs start from 1)
+                game_id = offset + index + 1
+                
+                # Convert array to hash format (fallback for array format)
+                game_hash = {
+                  "gameState" => game_data[0],
+                  "playerAddress" => game_data[1],
+                  "playerCommit" => game_data[2],
+                  "commitTimestamp" => game_data[3],
+                  "betAmount" => game_data[4],
+                  "houseRandomness" => game_data[5],
+                  "houseRandomnessTimestamp" => game_data[6],
+                  "playerSecret" => game_data[7],
+                  "playerCard" => game_data[8],
+                  "houseCard" => game_data[9],
+                  "revealTimestamp" => game_data[10]
+                }
+                games_with_ids << { game_id: game_id, game_data: game_hash }
+              end
+            end
+            puts "  Fetched #{games_batch.length} games from batch"
+          else
+            puts "  No games returned from batch"
           end
         rescue => e
-          # Skip games that don't exist or have errors
-          puts "Skipping game ID #{game_id}: #{e.message}"
+          puts "  Error fetching batch #{batch_index + 1}: #{e.message}"
+          Rails.logger.error "Error fetching batch #{batch_index + 1}: #{e.message}"
+        end
+        
+        # Add delay between batches to respect RPC rate limits (except for the last batch)
+        if batch_index < total_batches - 1
+          delay_seconds = BlockchainConfig.rpc_call_delay_ms / 1000.0
+          puts "  Waiting #{BlockchainConfig.rpc_call_delay_ms}ms before next batch..."
+          sleep(delay_seconds)
         end
       end
       
+      puts "Total games fetched: #{games_with_ids.length}"
       games_with_ids
     rescue => e
       Rails.logger.error "Failed to fetch latest games with IDs: #{e.message}"
-      []
-    end
-  end
-
-  def fetch_latest_games(client, contract, count = 50)
-    begin
-      result = client.call(contract, "getGames", 0, count, false)
-      
-      if result.is_a?(Array)
-        # Return the array of hashes directly
-        result
-      elsif result.is_a?(Hash)
-        # Fallback for single game - wrap in array
-        [result]
-      else
-        []
-      end
-    rescue => e
-      Rails.logger.error "Failed to fetch latest games: #{e.message}"
       []
     end
   end
