@@ -1,5 +1,7 @@
 source "https://rubygems.org"
 
+gem "bundler", "~> 2.6.9"
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.2"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
@@ -65,3 +67,4 @@ end
 # My Gems
 gem "eth", github: "turupawn/eth.rb", branch: "tuple-fix"
 gem "kaminari"
+gem "telegram-bot"

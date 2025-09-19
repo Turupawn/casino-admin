@@ -1,0 +1,19 @@
+# Telegram notification settings
+# Bot token and chat ID are configured via environment variables:
+# TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID
+
+default: &default
+  enabled: true
+  send_start_notification: true
+  send_completion_notification: true
+  send_error_notification: true
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  enabled: false  # Disable in test environment
+
+production:
+  <<: *default

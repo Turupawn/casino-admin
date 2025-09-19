@@ -3,6 +3,11 @@ namespace :games do
   task sync: :environment do
     puts "Starting smart games sync at #{Time.current}"
     
+    # Send start notification
+    TelegramNotificationService.send_sync_start_notification
+    
+    start_time = Time.current
+    
     begin
       # Initialize blockchain client and contract using configuration
       client = Eth::Client.create(BlockchainConfig.rpc_url)
@@ -31,8 +36,8 @@ namespace :games do
       sync_strategy = determine_sync_strategy(total_available_games)
       puts "Sync strategy: #{sync_strategy[:type]} - #{sync_strategy[:description]}"
       
-      # Execute the determined sync strategy
-      case sync_strategy[:type]
+      # Execute the determined sync strategy and capture counts
+      sync_results = case sync_strategy[:type]
       when :new_games
         sync_new_games(client, contract, sync_strategy[:starting_offset], total_available_games)
       when :pending_house_response
@@ -43,11 +48,21 @@ namespace :games do
         sync_new_games(client, contract, 0, total_available_games)
       end
       
+      # Send completion notification with actual counts
+      end_time = Time.current
+      duration = end_time - start_time
+      new_games_count = sync_results&.dig(:new_games) || 0
+      updated_games_count = sync_results&.dig(:updated_games) || 0
+      TelegramNotificationService.send_sync_completion_notification(new_games_count, updated_games_count, duration)
+      
     rescue => e
       puts "Error in smart games sync: #{e.message}"
       puts e.backtrace.first(5).join("\n")
       Rails.logger.error "Smart games sync failed: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
+      
+      # Send error notification
+      TelegramNotificationService.send_sync_error_notification(e.message)
     end
   end
 
@@ -160,7 +175,7 @@ namespace :games do
 
     if games_batch.nil? || !games_batch.is_a?(Array) || games_batch.empty?
       puts "No games returned from batch"
-      return
+      return { new_games: 0, updated_games: 0 }
     end
 
     process_games_batch(games_batch, starting_offset)
@@ -168,6 +183,8 @@ namespace :games do
 
   def sync_pending_house_games(client, contract, game_ids)
     puts "Syncing #{game_ids.length} games waiting for house response"
+
+    updated_games_count = 0
 
     # Fetch specific games by ID (more efficient than range)
     game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
@@ -191,6 +208,7 @@ namespace :games do
             }
 
             update_existing_game(game_id, game_hash)
+            updated_games_count += 1
           end
         end
 
@@ -200,10 +218,14 @@ namespace :games do
         puts "Error syncing house games batch: #{e.message}"
       end
     end
+
+    { new_games: 0, updated_games: updated_games_count }
   end
 
   def sync_pending_player_games(client, contract, game_ids)
     puts "Syncing #{game_ids.length} games waiting for player reveal"
+
+    updated_games_count = 0
 
     # Similar to house games but with different batching strategy
     game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
@@ -226,6 +248,7 @@ namespace :games do
             }
 
             update_existing_game(game_id, game_hash)
+            updated_games_count += 1
           end
         end
 
@@ -235,6 +258,8 @@ namespace :games do
         puts "Error syncing player games batch: #{e.message}"
       end
     end
+
+    { new_games: 0, updated_games: updated_games_count }
   end
 
   def process_games_batch(games_batch, starting_offset)
@@ -290,6 +315,8 @@ namespace :games do
     end
 
     puts "Batch processing completed: #{new_games_count} new, #{updated_games_count} updated"
+    
+    { new_games: new_games_count, updated_games: updated_games_count }
   end
 
   def update_existing_game(game_id, game_hash)
