@@ -12,12 +12,12 @@
 development:
   games_sync:
     command: "rails games:sync"
-    schedule: every <%= (Rails.application.config.blockchain['sync_schedule_ms'] || 5000) / 1000.0 %> seconds
+    schedule: every 10 seconds
 
 test:
   games_sync:
     command: "rails games:sync"
-    schedule: every <%= (Rails.application.config.blockchain['sync_schedule_ms'] || 5000) / 1000.0 %> seconds
+    schedule: every 10 seconds
 
 production:
   clear_solid_queue_finished_jobs:
@@ -25,4 +25,4 @@ production:
     schedule: every hour at minute 12
   games_sync:
     command: "rails games:sync"
-    schedule: every <%= (Rails.application.config.blockchain['sync_schedule_ms'] || 5000) / 1000.0 %> seconds
+    schedule: every 10 seconds
