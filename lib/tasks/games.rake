@@ -117,13 +117,17 @@ namespace :games do
     puts "Current state distribution: #{state_counts}"
     puts "Latest game ID in DB: #{latest_game_id}, Total available: #{total_available_games}"
 
-    # Strategy 1: Check for new games first (most common case)
-    if latest_game_id < total_available_games
-      new_games_count = total_available_games - latest_game_id
+    # Find the last completed (revealed) game
+    last_completed_game = Game.where(game_state: :revealed).maximum(:game_id) || 0
+    puts "Last completed game ID: #{last_completed_game}"
+
+    # Strategy 1: Check for new games after the last completed game
+    if last_completed_game < total_available_games
+      new_games_count = total_available_games - last_completed_game
       return {
         type: :new_games,
-        description: "Found #{new_games_count} new games to sync",
-        starting_offset: latest_game_id
+        description: "Found #{new_games_count} new games to sync after last completed game",
+        starting_offset: last_completed_game
       }
     end
 
@@ -153,10 +157,10 @@ namespace :games do
       }
     end
 
-    # Strategy 4: Full sync if no specific priorities (rare case)
+    # Strategy 4: No work needed - all games are completed and up to date
     {
-      type: :full_sync,
-      description: "No specific priorities, doing full sync",
+      type: :no_work,
+      description: "All games are completed and up to date",
       starting_offset: 0
     }
   end
