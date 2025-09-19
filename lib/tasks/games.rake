@@ -163,15 +163,19 @@ namespace :games do
 
   def sync_new_games(client, contract, starting_offset, total_available_games)
     puts "Syncing new games from offset #{starting_offset}"
+    puts "Total available games: #{total_available_games}"
 
     batch_size = BlockchainConfig.max_games_to_process
     remaining_games = total_available_games - starting_offset
     amount = [batch_size, remaining_games].min
 
     puts "Fetching batch: offset=#{starting_offset}, amount=#{amount}"
+    puts "Remaining games: #{remaining_games}"
 
     # Call getGames with ascending order (ascendant=true)
     games_batch = client.call(contract, "getGames", starting_offset, amount, true)
+
+    puts "Games batch returned: #{games_batch&.length || 'nil'}"
 
     if games_batch.nil? || !games_batch.is_a?(Array) || games_batch.empty?
       puts "No games returned from batch"
