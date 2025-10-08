@@ -18,7 +18,7 @@ class EthBalanceService
         gacha_token_address = client.call(contract, "gachaToken")
         Rails.logger.info "Retrieved gacha token address: #{gacha_token_address}"
         Rails.logger.info "Expected address from Remix: 0x7dfddf0aa8084df7ed63f1ddbc0c1dce436a5e8c"
-        Rails.logger.info "Addresses match: #{gacha_token_address.downcase == '0x7dfddf0aa8084df7ed63f1ddbc0c1dce436a5e8c'.downcase}"
+        Rails.logger.info "Addresses match: #{gacha_token_address&.downcase == '0x7dfddf0aa8084df7ed63f1ddbc0c1dce436a5e8c'.downcase}"
         
         # Get gacha token total supply using contract wrapper like in rake script
         gacha_total_supply = 0

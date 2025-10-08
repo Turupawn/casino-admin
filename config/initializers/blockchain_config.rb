@@ -2,12 +2,14 @@
 blockchain_config = Rails.application.config_for(:blockchain)
 
 # Override with environment variables if they exist
-blockchain_config['rpc_url'] = ENV['BLOCKCHAIN_RPC_URL'] if ENV['BLOCKCHAIN_RPC_URL']
+blockchain_config['rpc_url'] = ENV['RPC_URL'] if ENV['RPC_URL']
 blockchain_config['contract_address'] = ENV['CONTRACT_ADDRESS'] if ENV['CONTRACT_ADDRESS']
-blockchain_config['contract_abi_name'] = ENV['BLOCKCHAIN_CONTRACT_ABI'] if ENV['BLOCKCHAIN_CONTRACT_ABI']
+blockchain_config['contract_abi_name'] = ENV['CONTRACT_ABI_NAME'] if ENV['CONTRACT_ABI_NAME']
 blockchain_config['block_explorer_url'] = ENV['BLOCK_EXPLORER_URL'] if ENV['BLOCK_EXPLORER_URL']
 blockchain_config['sync_schedule_ms'] = ENV['BLOCKCHAIN_SYNC_SCHEDULE_MS'].to_i if ENV['BLOCKCHAIN_SYNC_SCHEDULE_MS']
 blockchain_config['max_games_to_process'] = ENV['BLOCKCHAIN_MAX_GAMES_TO_PROCESS'].to_i if ENV['BLOCKCHAIN_MAX_GAMES_TO_PROCESS']
+blockchain_config['poll_update_interval'] = ENV['POLL_UPDATE_INTERVAL'].to_i if ENV['POLL_UPDATE_INTERVAL']
+blockchain_config['telegram_message_interval'] = ENV['TELEGRAM_MESSAGE_INTERVAL'].to_i if ENV['TELEGRAM_MESSAGE_INTERVAL']
 
 # Make configuration available throughout the application
 Rails.application.config.blockchain = blockchain_config
@@ -56,5 +58,13 @@ module BlockchainConfig
 
   def self.block_explorer_url
     Rails.application.config.blockchain['block_explorer_url']
+  end
+
+  def self.poll_update_interval
+    Rails.application.config.blockchain['poll_update_interval']
+  end
+
+  def self.telegram_message_interval
+    Rails.application.config.blockchain['telegram_message_interval']
   end
 end

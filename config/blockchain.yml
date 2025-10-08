@@ -8,6 +8,8 @@ default: &default
   block_explorer_url: "https://megaeth-testnet.blockscout.com/address/"
   sync_schedule_ms: 10000
   max_games_to_process: 20
+  poll_update_interval: 60  # seconds between blockchain polls
+  telegram_message_interval: 300  # seconds between aggregated telegram messages
 
 development:
   <<: *default
