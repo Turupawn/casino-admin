@@ -2,6 +2,7 @@ class GamesController < ApplicationController
   def index
     @games = Game.recent.page(params[:page]).per(20)
     @total_games = Game.count
+    @house_balance = EthBalanceService.get_house_balance
   end
 
   private
