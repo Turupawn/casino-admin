@@ -5,6 +5,11 @@ class GamesController < ApplicationController
     @house_balance = EthBalanceService.get_house_balance
   end
 
+  def show
+    @game = Game.find(params[:id])
+    @house_balance = EthBalanceService.get_house_balance
+  end
+
   private
 
   def get_latest_games(client, count = 10)

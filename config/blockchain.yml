@@ -2,14 +2,10 @@
 # You can override these values using environment variables
 
 default: &default
-  # RPC endpoint for blockchain connection
   rpc_url: "https://carrot.megaeth.com/rpc"
-  
-  # Contract configuration
-  contract_address: "0x2Bd3e4Afc924919BC0fE5e1b448160B2bF2d91b7"
+  contract_address: "0x1234567890123456789012345678901234567890"
   contract_abi_name: "two_party_war_game"
-  
-  # Smart sync configuration
+  block_explorer_url: "https://megaeth-testnet.blockscout.com/address/"
   sync_schedule_ms: 10000
   max_games_to_process: 20
 

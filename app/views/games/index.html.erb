@@ -6,23 +6,75 @@
         ← Back to Dashboard
       </a>
     </div>
+    <!-- Blockchain Information Header -->
     <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 mb-6 text-white">
-      <h2 class="text-2xl font-bold mb-2">House Balance</h2>
       <% if @house_balance && @house_balance[:success] %>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p class="text-lg"><strong>ETH Balance:</strong> <%= sprintf("%.6f", @house_balance[:balance_eth]) %> ETH</p>
-            <p class="text-sm opacity-90">House Address: <%= @house_balance[:house_address] %></p>
+        <!-- Balance and Token Info -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <!-- ETH Balance Card -->
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+            <div class="text-lg font-semibold">ETH Balance</div>
+            <div class="text-2xl font-bold text-yellow-300"><%= sprintf("%.6f", @house_balance[:balance_eth]) %> ETH</div>
+            <div class="text-xs opacity-75 mt-1"><%= @house_balance[:balance_wei] %> wei</div>
           </div>
-          <div class="text-right">
-            <p class="text-sm opacity-90">Wei: <%= @house_balance[:balance_wei] %></p>
+          
+          <!-- Gacha Token Card -->
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+            <div class="text-lg font-semibold">Gacha Token Supply</div>
+            <% if @house_balance[:gacha_total_supply] && @house_balance[:gacha_total_supply] > 0 %>
+              <div class="text-2xl font-bold text-green-300"><%= sprintf("%.2f", @house_balance[:gacha_total_supply]) %></div>
+            <% else %>
+              <div class="text-2xl font-bold text-gray-300">N/A</div>
+              <div class="text-xs opacity-75 mt-1">Supply Unknown</div>
+            <% end %>
+          </div>
+          
+          <!-- Contract Status Card -->
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+            <div class="text-lg font-semibold">Contract Status</div>
+            <div class="text-2xl font-bold text-green-300">Active</div>
+            <div class="text-xs opacity-75 mt-1">Connected</div>
+          </div>
+        </div>
+        
+        <!-- Address Information -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <h3 class="text-lg font-semibold mb-3 text-center">Blockchain Addresses</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- House Address -->
+            <div class="text-center">
+              <div class="text-sm font-medium text-blue-200 mb-1">House Address</div>
+              <a href="<%= BlockchainConfig.block_explorer_url %><%= @house_balance[:house_address] %>" target="_blank" class="text-xs text-blue-200 hover:text-blue-100 underline break-all">
+                <%= @house_balance[:house_address] %>
+              </a>
+            </div>
+            
+            <!-- Contract Address -->
+            <div class="text-center">
+              <div class="text-sm font-medium text-blue-200 mb-1">Contract Address</div>
+              <a href="<%= BlockchainConfig.block_explorer_url %><%= @house_balance[:contract_address] %>" target="_blank" class="text-xs text-blue-200 hover:text-blue-100 underline break-all">
+                <%= @house_balance[:contract_address] %>
+              </a>
+            </div>
+            
+            <!-- Gacha Token Address -->
+            <% if @house_balance[:gacha_token_address].present? %>
+            <div class="text-center">
+              <div class="text-sm font-medium text-blue-200 mb-1">Gacha Token</div>
+              <a href="<%= BlockchainConfig.block_explorer_url %><%= @house_balance[:gacha_token_address] %>" target="_blank" class="text-xs text-blue-200 hover:text-blue-100 underline break-all">
+                <%= @house_balance[:gacha_token_address] %>
+              </a>
+            </div>
+            <% end %>
           </div>
         </div>
       <% else %>
-        <p class="text-red-200">Failed to fetch house balance</p>
-        <% if @house_balance && @house_balance[:error] %>
-          <p class="text-sm opacity-90">Error: <%= @house_balance[:error] %></p>
-        <% end %>
+        <div class="text-center">
+          <p class="text-red-200 text-lg">Failed to fetch house balance</p>
+          <% if @house_balance && @house_balance[:error] %>
+            <p class="text-sm opacity-90 mt-2">Error: <%= @house_balance[:error] %></p>
+          <% end %>
+        </div>
       <% end %>
     </div>
     <!-- Statistics Card -->
@@ -66,7 +118,9 @@
             <% @games.each do |game| %>
               <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span class="font-mono font-semibold">#<%= game.game_id %></span>
+                  <%= link_to game_path(game), class: "font-mono font-semibold text-blue-600 hover:text-blue-800 hover:underline" do %>
+                    #<%= game.game_id %>
+                  <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -96,6 +150,12 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <%= game.commit_timestamp.strftime("%Y-%m-%d %H:%M:%S") %>
+                  <% if game.house_randomness_timestamp.present? %>
+                    <br>
+                    <span class="text-xs text-blue-600 font-medium">
+                      Duration: <%= ((game.house_randomness_timestamp - game.commit_timestamp) * 1000).round(0) %> ms
+                    </span>
+                  <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div class="flex items-center space-x-2">

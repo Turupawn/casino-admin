@@ -5,6 +5,7 @@ blockchain_config = Rails.application.config_for(:blockchain)
 blockchain_config['rpc_url'] = ENV['BLOCKCHAIN_RPC_URL'] if ENV['BLOCKCHAIN_RPC_URL']
 blockchain_config['contract_address'] = ENV['CONTRACT_ADDRESS'] if ENV['CONTRACT_ADDRESS']
 blockchain_config['contract_abi_name'] = ENV['BLOCKCHAIN_CONTRACT_ABI'] if ENV['BLOCKCHAIN_CONTRACT_ABI']
+blockchain_config['block_explorer_url'] = ENV['BLOCK_EXPLORER_URL'] if ENV['BLOCK_EXPLORER_URL']
 blockchain_config['sync_schedule_ms'] = ENV['BLOCKCHAIN_SYNC_SCHEDULE_MS'].to_i if ENV['BLOCKCHAIN_SYNC_SCHEDULE_MS']
 blockchain_config['max_games_to_process'] = ENV['BLOCKCHAIN_MAX_GAMES_TO_PROCESS'].to_i if ENV['BLOCKCHAIN_MAX_GAMES_TO_PROCESS']
 
@@ -51,5 +52,9 @@ module BlockchainConfig
 
   def self.max_pending_player_games
     max_games_to_process
+  end
+
+  def self.block_explorer_url
+    Rails.application.config.blockchain['block_explorer_url']
   end
 end
