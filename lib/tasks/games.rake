@@ -3,9 +3,6 @@ namespace :games do
   task sync: :environment do
     puts "Starting smart games sync at #{Time.current}"
     
-    # Send start notification
-    TelegramNotificationService.send_sync_start_notification
-    
     start_time = Time.current
     
     begin
@@ -48,12 +45,12 @@ namespace :games do
         sync_new_games(client, contract, 0, total_available_games)
       end
       
-      # Send completion notification with actual counts
+      # Record sync statistics for potential telegram aggregation
       end_time = Time.current
       duration = end_time - start_time
       new_games_count = sync_results&.dig(:new_games) || 0
       updated_games_count = sync_results&.dig(:updated_games) || 0
-      TelegramNotificationService.send_sync_completion_notification(new_games_count, updated_games_count, duration)
+      TelegramNotificationService.record_sync_and_notify_if_needed(new_games_count, updated_games_count, duration)
       
     rescue => e
       puts "Error in smart games sync: #{e.message}"
