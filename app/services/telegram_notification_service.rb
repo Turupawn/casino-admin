@@ -37,7 +37,7 @@ class TelegramNotificationService
           
           # Add cost calculations if there are games
           if stats[:total_new_games] > 0 || stats[:total_updated_games] > 0
-            cost_data = calculate_average_costs(stats[:total_new_games])
+            cost_data = self.calculate_average_costs(stats[:total_new_games])
             if cost_data[:player_cost] && cost_data[:house_cost]
               message += "\n\n#{cost_data[:player_cost]} avg player costs\n" \
                         "#{cost_data[:house_cost]} avg house costs"
