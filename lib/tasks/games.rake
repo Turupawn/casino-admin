@@ -64,12 +64,6 @@ namespace :games do
   end
 
 
-  desc "Run a single sync manually"
-  task manual_sync: :environment do
-    puts "Running manual sync..."
-    Rake::Task['games:sync'].invoke
-    puts "Manual sync completed!"
-  end
   
   private
   

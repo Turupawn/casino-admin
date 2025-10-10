@@ -1,0 +1,181 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Transaction Details</h1>
+        <p class="text-sm text-gray-600 mt-1">Transaction Hash: <%= @transaction.transaction_hash %></p>
+      </div>
+      <div class="flex space-x-3">
+        <%= link_to transactions_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+          Back to Transactions
+        <% end %>
+        <%= link_to games_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+          View Games
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Transaction Overview -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Transaction Overview</h2>
+      </div>
+      <div class="px-6 py-4 space-y-4">
+        <!-- Transaction Type -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Type</span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+            <%= case @transaction.transaction_type
+                when 'commit' then 'bg-blue-100 text-blue-800'
+                when 'multiPostRandomness' then 'bg-green-100 text-green-800'
+                when 'reveal' then 'bg-purple-100 text-purple-800'
+                else 'bg-gray-100 text-gray-800'
+                end %>">
+            <%= @transaction.transaction_type %>
+          </span>
+        </div>
+
+        <!-- Function Name -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Function</span>
+          <span class="text-sm font-medium text-gray-900"><%= @transaction.function_name %></span>
+        </div>
+
+        <!-- Status -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Status</span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+            <%= @transaction.status == 'ok' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+            <%= @transaction.status %>
+          </span>
+        </div>
+
+        <!-- Value -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Value</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.eth_value %></span>
+        </div>
+
+        <!-- Fee -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Fee</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.eth_fee %></span>
+        </div>
+
+        <!-- Gas Used -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Gas Used</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.gas_used %></span>
+        </div>
+
+        <!-- Gas Price -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Gas Price</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.gas_price %></span>
+        </div>
+
+        <!-- Block Number -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Block Number</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.block_number %></span>
+        </div>
+
+        <!-- Confirmations -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-500">Confirmations</span>
+          <span class="text-sm font-mono text-gray-900"><%= @transaction.confirmations %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address Information -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Address Information</h2>
+      </div>
+      <div class="px-6 py-4 space-y-4">
+        <!-- From Address -->
+        <div>
+          <span class="text-sm font-medium text-gray-500">From Address</span>
+          <div class="mt-1">
+            <a href="<%= @transaction.from_explorer_url %>" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-sm break-all">
+              <%= @transaction.from_address %>
+            </a>
+          </div>
+        </div>
+
+        <!-- To Address -->
+        <div>
+          <span class="text-sm font-medium text-gray-500">To Address</span>
+          <div class="mt-1">
+            <a href="https://megaeth-testnet.blockscout.com/address/<%= @transaction.to_address %>" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-sm break-all">
+              <%= @transaction.to_address %>
+            </a>
+          </div>
+        </div>
+
+        <!-- Transaction Hash -->
+        <div>
+          <span class="text-sm font-medium text-gray-500">Transaction Hash</span>
+          <div class="mt-1">
+            <a href="<%= @transaction.explorer_url %>" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-sm break-all">
+              <%= @transaction.transaction_hash %>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timestamp and Raw Data -->
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Timestamp -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Timestamp</h2>
+      </div>
+      <div class="px-6 py-4">
+        <div class="text-sm font-mono text-gray-900">
+          <%= @transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          <%= time_ago_in_words(@transaction.timestamp) %> ago
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw Input Data -->
+    <% if @transaction.raw_input.present? %>
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">Raw Input Data</h2>
+        </div>
+        <div class="px-6 py-4">
+          <div class="bg-gray-50 rounded p-3">
+            <code class="text-xs font-mono text-gray-800 break-all">
+              <%= @transaction.raw_input %>
+            </code>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Decoded Input Data -->
+  <% if @transaction.decoded_input.present? %>
+    <div class="mt-8">
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">Decoded Input Data</h2>
+        </div>
+        <div class="px-6 py-4">
+          <div class="bg-gray-50 rounded p-3">
+            <pre class="text-xs font-mono text-gray-800 whitespace-pre-wrap"><%= JSON.pretty_generate(JSON.parse(@transaction.decoded_input)) %></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

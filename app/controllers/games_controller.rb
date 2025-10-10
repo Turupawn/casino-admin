@@ -2,7 +2,12 @@ class GamesController < ApplicationController
   def index
     @games = Game.recent.page(params[:page]).per(20)
     @total_games = Game.count
+    @total_transactions = Transaction.count
     @house_balance = EthBalanceService.get_house_balance
+    
+    # Calculate average transaction costs
+    @house_average_cost = Transaction.house_average_cost || 0
+    @player_average_cost = Transaction.player_average_cost || 0
   end
 
   def show

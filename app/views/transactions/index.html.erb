@@ -1,0 +1,142 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Latest Transactions</h1>
+            <p class="text-sm text-gray-600 mt-1">Total: <%= @total_transactions %> transactions</p>
+          </div>
+          <%= link_to games_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+            View Games
+          <% end %>
+        </div>
+    <p class="text-gray-600">Contract Address: <code class="bg-gray-100 px-2 py-1 rounded"><%= @contract_address %></code></p>
+  </div>
+
+  <% if @transactions.any? %>
+    <!-- Average Transaction Costs -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 mb-6 text-white">
+      <h2 class="text-xl font-bold mb-4 text-center">Average Transaction Costs</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <!-- House Average -->
+               <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                 <div class="text-lg font-semibold mb-2">House Average</div>
+                 <div class="text-2xl font-bold text-yellow-300">
+                   <%= TransactionService.format_eth_value_detailed(@house_average_cost) %>
+                 </div>
+                 <div class="text-xs opacity-75 mt-1">MultiPostRandomness transactions</div>
+               </div>
+
+               <!-- Player Average -->
+               <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                 <div class="text-lg font-semibold mb-2">Player Average</div>
+                 <div class="text-2xl font-bold text-green-300">
+                   <%= TransactionService.format_eth_value_detailed(@player_average_cost) %>
+                 </div>
+                 <div class="text-xs opacity-75 mt-1">Commit + Reveal transactions</div>
+               </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @transactions.any? %>
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+      <ul class="divide-y divide-gray-200">
+        <% @transactions.each do |transaction| %>
+          <li class="px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-3 mb-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    <%= case transaction.transaction_type
+                        when 'commit' then 'bg-blue-100 text-blue-800'
+                        when 'multiPostRandomness' then 'bg-green-100 text-green-800'
+                        when 'reveal' then 'bg-purple-100 text-purple-800'
+                        else 'bg-gray-100 text-gray-800'
+                        end %>">
+                    <%= transaction.transaction_type %>
+                  </span>
+                  <span class="text-sm font-medium text-gray-700">
+                    <%= transaction.function_name %>
+                  </span>
+                </div>
+                
+                       <div class="space-y-2">
+                         <div>
+                           <p class="text-sm font-medium text-gray-900">
+                             Hash:
+                             <a href="<%= transaction_path(transaction) %>" class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-xs">
+                               <%= transaction.transaction_hash %>
+                             </a>
+                             <a href="<%= transaction.explorer_url %>" target="_blank" class="ml-2 text-gray-500 hover:text-gray-700 text-xs">
+                               (explorer)
+                             </a>
+                           </p>
+                         </div>
+                  
+                  <div>
+                    <p class="text-sm text-gray-500">
+                      From: 
+                      <a href="<%= transaction.from_explorer_url %>" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-mono text-xs">
+                        <%= transaction.from_address %>
+                      </a>
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p class="text-sm text-gray-500">
+                      Timestamp: <span class="font-mono text-xs"><%= transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %></span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex flex-col items-end space-y-2">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-gray-900">
+                    Value: <span class="font-mono text-sm"><%= transaction.eth_value %></span>
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    Fee: <span class="font-mono text-sm"><%= transaction.eth_fee %></span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </li>
+        <% end %>
+             </ul>
+           </div>
+           
+           <!-- Pagination -->
+           <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+             <div class="flex-1 flex justify-between sm:hidden">
+               <%= paginate @transactions %>
+             </div>
+             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+               <div>
+                 <p class="text-sm text-gray-700">
+                   Showing
+                   <span class="font-medium"><%= (@transactions.current_page - 1) * @transactions.limit_value + 1 %></span>
+                   to
+                   <span class="font-medium"><%= [(@transactions.current_page - 1) * @transactions.limit_value + @transactions.limit_value, @transactions.total_count].min %></span>
+                   of
+                   <span class="font-medium"><%= @transactions.total_count %></span>
+                   results
+                 </p>
+               </div>
+               <div>
+                 <%= paginate @transactions %>
+               </div>
+             </div>
+           </div>
+         <% else %>
+    <div class="text-center py-12">
+      <div class="text-gray-500">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No transactions found</h3>
+        <p class="mt-1 text-sm text-gray-500">Unable to fetch transactions from the contract.</p>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -13,11 +13,17 @@ development:
   games_sync:
     class: GamesSyncJob
     schedule: every 10 seconds
+  transactions_sync:
+    command: "Rake::Task['transactions:sync'].invoke"
+    schedule: every 30 seconds
 
 test:
   games_sync:
     class: GamesSyncJob
     schedule: every 10 seconds
+  transactions_sync:
+    command: "Rake::Task['transactions:sync'].invoke"
+    schedule: every 30 seconds
 
 production:
   clear_solid_queue_finished_jobs:
@@ -26,3 +32,6 @@ production:
   games_sync:
     class: GamesSyncJob
     schedule: every 10 seconds
+  transactions_sync:
+    command: "Rake::Task['transactions:sync'].invoke"
+    schedule: every 30 seconds

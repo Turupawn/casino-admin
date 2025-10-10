@@ -1,5 +1,6 @@
 class CreateGames < ActiveRecord::Migration[8.0]
   def change
+    puts "Creating games table..."
     create_table :games do |t|
       # Primary key from blockchain
       t.integer :game_id, null: false
@@ -31,6 +32,7 @@ class CreateGames < ActiveRecord::Migration[8.0]
     end
 
     # Indexes
+    puts "Adding indexes to games table..."
     add_index :games, :game_id, unique: true
     add_index :games, :player_address
     add_index :games, :player_commit
@@ -38,5 +40,6 @@ class CreateGames < ActiveRecord::Migration[8.0]
     add_index :games, :bet_amount
     add_index :games, :result
     add_index :games, :total_time
+    puts "Games table created successfully!"
   end
 end
