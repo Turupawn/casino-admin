@@ -54,3 +54,8 @@ end
 Rake::Task['db:migrate'].enhance do
   Rake::Task['function_signatures:auto_populate'].invoke
 end
+
+# Also hook into db:prepare for production deployments
+Rake::Task['db:prepare'].enhance do
+  Rake::Task['function_signatures:auto_populate'].invoke
+end
