@@ -118,7 +118,7 @@
                   
                   <div>
                     <p class="text-sm text-gray-500">
-                      Timestamp: <span class="font-mono text-xs"><%= transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %></span>
+                      Timestamp: <span class="font-mono text-xs" title="<%= transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>"><%= time_ago_in_words(transaction.timestamp) %> ago</span>
                     </p>
                   </div>
                 </div>

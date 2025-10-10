@@ -46,11 +46,9 @@ namespace :games do
       end
       
       # Record sync statistics for potential telegram aggregation
-      end_time = Time.current
-      duration = end_time - start_time
       new_games_count = sync_results&.dig(:new_games) || 0
       updated_games_count = sync_results&.dig(:updated_games) || 0
-      TelegramNotificationService.record_sync_and_notify_if_needed(new_games_count, updated_games_count, duration)
+      TelegramNotificationService.record_sync_and_notify_if_needed(new_games_count, updated_games_count)
       
     rescue => e
       puts "Error in smart games sync: #{e.message}"

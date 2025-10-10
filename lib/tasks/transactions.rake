@@ -86,16 +86,12 @@ namespace :transactions do
         end
       end
 
-      end_time = Time.current
-      duration = end_time - start_time
-      
       puts "Transactions sync completed:"
       puts "  New transactions: #{new_count}"
       puts "  Updated transactions: #{updated_count}"
-      puts "  Duration: #{duration.round(2)} seconds"
       
       # Record sync statistics for potential telegram aggregation
-      TelegramNotificationService.record_sync_and_notify_if_needed(new_count, updated_count, duration)
+      TelegramNotificationService.record_sync_and_notify_if_needed(new_count, updated_count)
       
     rescue => e
       puts "Error in transactions sync: #{e.message}"

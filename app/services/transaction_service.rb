@@ -2,7 +2,7 @@ class TransactionService
   def self.fetch_transactions_from_page(contract_address, page)
     begin
       # Construct the API URL for MegaETH testnet using old API format
-      api_url = "https://megaeth-testnet.blockscout.com/api?module=account&action=txlist&address=#{contract_address}&sort=asc&filterby=to&page=#{page}&offset=35"
+      api_url = "https://megaeth-testnet.blockscout.com/api?module=account&action=txlist&address=#{contract_address}&sort=asc&filterby=to&page=#{page}&offset=#{BlockchainConfig.blockscout_api_limit}"
       
       puts "Fetching page #{page} from: #{api_url}"
       
@@ -83,8 +83,8 @@ class TransactionService
     next_sequential_id = highest_sequential_id + 1
     
     # Calculate which page to fetch based on sequential_id
-    # Each page has 35 transactions, so page = (sequential_id - 1) / 35 + 1
-    next_page = ((next_sequential_id - 1) / 35) + 1
+    # Each page has #{BlockchainConfig.blockscout_api_limit} transactions, so page = (sequential_id - 1) / #{BlockchainConfig.blockscout_api_limit} + 1
+    next_page = ((next_sequential_id - 1) / BlockchainConfig.blockscout_api_limit) + 1
     
     puts "Highest sequential_id in DB: #{highest_sequential_id}"
     puts "Next sequential_id to fetch: #{next_sequential_id}"
@@ -103,8 +103,8 @@ class TransactionService
     # Add sequential_id to each transaction based on page position
     if transactions_data && !transactions_data.empty?
       transactions_data.each_with_index do |tx_data, index|
-        # Calculate sequential_id: (page - 1) * 35 + index + 1
-        tx_data[:sequential_id] = (next_page - 1) * 35 + index + 1
+        # Calculate sequential_id: (page - 1) * #{BlockchainConfig.blockscout_api_limit} + index + 1
+        tx_data[:sequential_id] = (next_page - 1) * BlockchainConfig.blockscout_api_limit + index + 1
       end
       puts "Added sequential_ids to #{transactions_data.length} transactions"
     end

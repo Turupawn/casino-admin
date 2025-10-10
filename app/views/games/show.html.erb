@@ -40,7 +40,6 @@
         
         <!-- Address Information -->
         <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-          <h3 class="text-lg font-semibold mb-3 text-center">Blockchain Addresses</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- House Address -->
             <div class="text-center">
@@ -121,15 +120,15 @@
         </div>
         <div class="flex justify-between">
           <span class="text-sm font-medium text-gray-500">Commit Timestamp:</span>
-          <span class="text-sm text-gray-900">
-            <%= @game.commit_timestamp.strftime("%Y-%m-%d %H:%M:%S") %>
+          <span class="text-sm text-gray-900" title="<%= @game.commit_timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>">
+            <%= time_ago_in_words(@game.commit_timestamp) %> ago
           </span>
         </div>
         <% if @game.house_randomness_timestamp.present? %>
         <div class="flex justify-between">
           <span class="text-sm font-medium text-gray-500">House Randomness Timestamp:</span>
-          <span class="text-sm text-gray-900">
-            <%= @game.house_randomness_timestamp.strftime("%Y-%m-%d %H:%M:%S") %>
+          <span class="text-sm text-gray-900" title="<%= @game.house_randomness_timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>">
+            <%= time_ago_in_words(@game.house_randomness_timestamp) %> ago
           </span>
         </div>
         <div class="flex justify-between">
@@ -142,8 +141,8 @@
         <% if @game.reveal_timestamp.present? %>
         <div class="flex justify-between">
           <span class="text-sm font-medium text-gray-500">Reveal Timestamp:</span>
-          <span class="text-sm text-gray-900">
-            <%= @game.reveal_timestamp.strftime("%Y-%m-%d %H:%M:%S") %>
+          <span class="text-sm text-gray-900" title="<%= @game.reveal_timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>">
+            <%= time_ago_in_words(@game.reveal_timestamp) %> ago
           </span>
         </div>
         <% end %>
@@ -196,8 +195,8 @@
         <% if @game.house_randomness_timestamp.present? %>
         <div>
           <span class="text-sm font-medium text-gray-500">House Randomness Timestamp:</span>
-          <p class="text-sm text-gray-900 mt-1">
-            <%= @game.house_randomness_timestamp.strftime("%Y-%m-%d %H:%M:%S") %>
+          <p class="text-sm text-gray-900 mt-1" title="<%= @game.house_randomness_timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>">
+            <%= time_ago_in_words(@game.house_randomness_timestamp) %> ago
           </p>
         </div>
         <% end %>

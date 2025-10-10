@@ -8,22 +8,23 @@
 #     command: "SoftDeletedRecord.due.delete_all"
 #     priority: 2
 #     schedule: at 5am every day
+#
 
 development:
   games_sync:
     class: GamesSyncJob
-    schedule: every 10 seconds
+    schedule: every 20 seconds
   transactions_sync:
-    command: "Rake::Task['transactions:sync'].invoke"
-    schedule: every 30 seconds
+    class: TransactionsSyncJob
+    schedule: every 20 seconds
 
 test:
   games_sync:
     class: GamesSyncJob
-    schedule: every 10 seconds
+    schedule: every 20 seconds
   transactions_sync:
-    command: "Rake::Task['transactions:sync'].invoke"
-    schedule: every 30 seconds
+    class: TransactionsSyncJob
+    schedule: every 20 seconds
 
 production:
   clear_solid_queue_finished_jobs:
@@ -31,7 +32,7 @@ production:
     schedule: every hour at minute 12
   games_sync:
     class: GamesSyncJob
-    schedule: every 10 seconds
+    schedule: every 20 seconds
   transactions_sync:
-    command: "Rake::Task['transactions:sync'].invoke"
-    schedule: every 30 seconds
+    class: TransactionsSyncJob
+    schedule: every 20 seconds

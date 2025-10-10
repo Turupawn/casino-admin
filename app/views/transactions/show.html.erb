@@ -137,10 +137,7 @@
         <h2 class="text-lg font-medium text-gray-900">Timestamp</h2>
       </div>
       <div class="px-6 py-4">
-        <div class="text-sm font-mono text-gray-900">
-          <%= @transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>
-        </div>
-        <div class="text-xs text-gray-500 mt-1">
+        <div class="text-sm font-mono text-gray-900" title="<%= @transaction.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") %>">
           <%= time_ago_in_words(@transaction.timestamp) %> ago
         </div>
       </div>
