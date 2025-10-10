@@ -3,6 +3,7 @@ class GamesController < ApplicationController
     @games = Game.recent.page(params[:page]).per(20)
     @total_games = Game.count
     @total_transactions = Transaction.count
+    @reveal_count = Transaction.reveals.count
     @house_balance = EthBalanceService.get_house_balance
     
     # Calculate average transaction costs

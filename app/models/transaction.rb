@@ -50,28 +50,11 @@ class Transaction < ApplicationRecord
     "#{formatted} ETH"
   end
 
-  def transaction_type
-    case method
-    when 'commit'
-      'commit'
-    when 'multiPostRandomness'
-      'multiPostRandomness'
-    when 'reveal'
-      'reveal'
-    else
-      method || 'unknown'
-    end
-  end
-
   def explorer_url
     "https://megaeth-testnet.blockscout.com/tx/#{transaction_hash}"
   end
 
   def from_explorer_url
     "https://megaeth-testnet.blockscout.com/address/#{from_address}"
-  end
-
-  def function_name
-    function_signature&.name || transaction_type
   end
 end

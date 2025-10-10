@@ -2,7 +2,9 @@ class TransactionsController < ApplicationController
   def index
     @transactions = Transaction.recent.page(params[:page]).per(20)
     @total_transactions = Transaction.count
-    @contract_address = BlockchainConfig.contract_address
+    @commit_count = Transaction.commits.count
+    @reveal_count = Transaction.reveals.count
+    @multi_post_randomness_count = Transaction.multi_post_randomness.count
     
     # Calculate average costs from database
     @house_average_cost = Transaction.house_average_cost || 0
