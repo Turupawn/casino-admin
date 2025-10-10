@@ -1,0 +1,107 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Transaction Costs Over Time</h1>
+        <p class="text-sm text-gray-600 mt-1">Average transaction fees by type over the last 30 days</p>
+      </div>
+      <div class="flex space-x-3">
+        <%= link_to transactions_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Transactions
+        <% end %>
+        <%= link_to games_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+          View Games
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-lg p-6">
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">Transaction Fee Trends</h2>
+      <p class="text-sm text-gray-600">Track how transaction costs have changed over time for different transaction types</p>
+    </div>
+    
+    <div class="relative h-96">
+      <canvas id="transactionChart"></canvas>
+    </div>
+    
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('transactionChart').getContext('2d');
+    const chartData = <%= raw @chart_data.to_json %>;
+    
+    new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Average Transaction Fees (Wei)',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          },
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed.y;
+                return context.dataset.label + ': ' + value.toLocaleString() + ' Wei';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Date'
+            },
+            ticks: {
+              maxTicksLimit: 10
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Average Fee (Wei)'
+            },
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value.toLocaleString() + ' Wei';
+              }
+            }
+          }
+        },
+        elements: {
+          point: {
+            radius: 3,
+            hoverRadius: 6
+          }
+        }
+      }
+    });
+  });
+</script>

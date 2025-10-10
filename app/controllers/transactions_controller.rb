@@ -14,4 +14,9 @@ class TransactionsController < ApplicationController
   def show
     @transaction = Transaction.find(params[:id])
   end
+
+  def chart
+    # Get transaction data grouped by day for the last 30 days
+    @chart_data = Transaction.chart_data
+  end
 end

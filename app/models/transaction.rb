@@ -57,4 +57,53 @@ class Transaction < ApplicationRecord
   def from_explorer_url
     "https://megaeth-testnet.blockscout.com/address/#{from_address}"
   end
+
+  # Chart data for time series visualization
+  def self.chart_data
+    # Get data for the last 30 days
+    start_date = 30.days.ago.beginning_of_day
+    end_date = Time.current.end_of_day
+
+    # Group transactions by day and method
+    data = where(timestamp: start_date..end_date)
+           .group("DATE(timestamp)", :method)
+           .average(:fee)
+           .transform_values { |fee| fee.to_f } # Keep in wei
+
+    # Create structured data for Chart.js - show all days in the month
+    dates = (start_date.to_date..end_date.to_date).map(&:to_s)
+    
+    {
+      labels: dates,
+      datasets: [
+        {
+          label: 'Commits',
+          data: dates.map { |date| data.dig([date, 'commit']) || 0 },
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.1,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Reveals',
+          data: dates.map { |date| data.dig([date, 'reveal']) || 0 },
+          borderColor: 'rgb(147, 51, 234)',
+          backgroundColor: 'rgba(147, 51, 234, 0.1)',
+          tension: 0.1,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'MultiPostRandomness',
+          data: dates.map { |date| data.dig([date, 'multiPostRandomness']) || 0 },
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          tension: 0.1,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        }
+      ]
+    }
+  end
 end
