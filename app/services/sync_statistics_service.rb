@@ -1,10 +1,9 @@
 class SyncStatisticsService
   # Track sync statistics for aggregation
-  def self.record_sync_stats(new_games_count, updated_games_count)
+  def self.record_sync_stats(new_games_count)
     stats = {
       timestamp: Time.current,
-      new_games: new_games_count,
-      updated_games: updated_games_count
+      new_games: new_games_count
     }
     
     # Store in Redis or database for aggregation
@@ -67,13 +66,11 @@ class SyncStatisticsService
   def self.aggregate_stats(stats)
     return {
       total_new_games: 0,
-      total_updated_games: 0,
       sync_count: 0,
       time_range: "No data"
     } if stats.empty?
 
     total_new_games = stats.sum { |stat| stat[:new_games] }
-    total_updated_games = stats.sum { |stat| stat[:updated_games] }
     sync_count = stats.length
     
     time_range = if stats.length == 1
@@ -86,7 +83,6 @@ class SyncStatisticsService
 
     {
       total_new_games: total_new_games,
-      total_updated_games: total_updated_games,
       sync_count: sync_count,
       time_range: time_range
     }

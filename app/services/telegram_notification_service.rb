@@ -16,27 +16,26 @@ class TelegramNotificationService
       end
     end
 
-    def record_sync_and_notify_if_needed(new_games_count, updated_games_count)
+    def record_sync_and_notify_if_needed(new_games_count)
       return unless TelegramConfig.send_completion_notification?
       
       # Record the sync statistics for aggregation
-      SyncStatisticsService.record_sync_stats(new_games_count, updated_games_count)
+      SyncStatisticsService.record_sync_stats(new_games_count)
       
       # Only send aggregated messages at the configured interval
       if SyncStatisticsService.should_send_telegram?
         stats = SyncStatisticsService.get_aggregated_stats
 
-        if stats[:total_new_games] == 0 && stats[:total_updated_games] == 0
-          message = "No games\n" \
+        if stats[:total_new_games] == 0
+          message = "No new games\n" \
                     "Period: #{stats[:time_range]}\n" \
                     "#{stats[:sync_count]} syncs"
         else
           message = "#{stats[:total_new_games]} new games\n" \
-                    "#{stats[:total_updated_games]} games updated\n" \
                     "#{stats[:sync_count]} syncs"
           
-          # Add cost calculations if there are games
-          if stats[:total_new_games] > 0 || stats[:total_updated_games] > 0
+          # Add cost calculations if there are new games
+          if stats[:total_new_games] > 0
             cost_data = calculate_average_costs(stats[:total_new_games])
             if cost_data[:player_cost] && cost_data[:house_cost]
               message += "\n\n#{cost_data[:player_cost]} avg player costs\n" \

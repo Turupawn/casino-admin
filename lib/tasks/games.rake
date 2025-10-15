@@ -47,8 +47,7 @@ namespace :games do
       
       # Record sync statistics for potential telegram aggregation
       new_games_count = sync_results&.dig(:new_games) || 0
-      updated_games_count = sync_results&.dig(:updated_games) || 0
-      TelegramNotificationService.record_sync_and_notify_if_needed(new_games_count, updated_games_count)
+      TelegramNotificationService.record_sync_and_notify_if_needed(new_games_count)
       
     rescue => e
       puts "Error in smart games sync: #{e.message}"
@@ -181,8 +180,6 @@ namespace :games do
   def sync_pending_house_games(client, contract, game_ids)
     puts "Syncing #{game_ids.length} games waiting for house response"
 
-    updated_games_count = 0
-
     # Fetch specific games by ID (more efficient than range)
     game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
       begin
@@ -205,7 +202,6 @@ namespace :games do
             }
 
             update_existing_game(game_id, game_hash)
-            updated_games_count += 1
           end
         end
 
@@ -216,13 +212,12 @@ namespace :games do
       end
     end
 
-    { new_games: 0, updated_games: updated_games_count }
+    { new_games: 0 }
   end
 
   def sync_pending_player_games(client, contract, game_ids)
     puts "Syncing #{game_ids.length} games waiting for player reveal"
 
-    updated_games_count = 0
 
     # Similar to house games but with different batching strategy
     game_ids.each_slice(BlockchainConfig.max_games_to_process) do |batch_ids|
@@ -245,7 +240,6 @@ namespace :games do
             }
 
             update_existing_game(game_id, game_hash)
-            updated_games_count += 1
           end
         end
 
@@ -256,14 +250,13 @@ namespace :games do
       end
     end
 
-    { new_games: 0, updated_games: updated_games_count }
+    { new_games: 0 }
   end
 
   def process_games_batch(games_batch, starting_offset)
     puts "Processing batch of #{games_batch.length} games"
 
     new_games_count = 0
-    updated_games_count = 0
 
     games_batch.each_with_index do |game_data, index|
       begin
@@ -297,7 +290,6 @@ namespace :games do
 
         if existing_game
           update_existing_game(game_id, game_hash)
-          updated_games_count += 1
         else
           # Create new game
           game = create_new_game(game_hash, game_id)
@@ -311,9 +303,9 @@ namespace :games do
       end
     end
 
-    puts "Batch processing completed: #{new_games_count} new, #{updated_games_count} updated"
+    puts "Batch processing completed: #{new_games_count} new games"
     
-    { new_games: new_games_count, updated_games: updated_games_count }
+    { new_games: new_games_count }
   end
 
   def update_existing_game(game_id, game_hash)
