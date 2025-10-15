@@ -91,7 +91,7 @@ namespace :transactions do
       puts "  Updated transactions: #{updated_count}"
       
       # Record sync statistics for potential telegram aggregation
-      TelegramNotificationService.record_sync_and_notify_if_needed(new_count, updated_count)
+      TelegramNotificationService.record_sync_and_notify_if_needed(new_count)
       
     rescue => e
       puts "Error in transactions sync: #{e.message}"
